@@ -5,17 +5,17 @@ class PointsController {
   async index(request: Request, response: Response) {
     const { city, uf, items } = request.query;
 
-    const parsedItems = String(items)
-      .split(',')
-      .map(item => Number(item.trim()));
+    const parsedItems = items
+      ? String(items)
+          .split(',')
+          .map(item => Number(item.trim()))
+      : [];
 
-    const points = await knex('points')
-      .join('point_items', 'points.id', '=', 'point_items.point_id')
-      .whereIn('point_items.item_id', parsedItems)
-      .where('city', String(city))
-      .where('uf', String(uf))
-      .distinct()
-      .select('points.*');
+    const query = knex('points').join('point_items', 'points.id', '=', 'point_items.point_id') // prettier-ignore
+    if (parsedItems.length) query.whereIn('point_items.item_id', parsedItems);
+    if (city) query.where('city', String(city));
+    if (uf) query.where('uf', String(uf));
+    const points = await query.distinct().select('points.*');
 
     return response.json(points);
   }
